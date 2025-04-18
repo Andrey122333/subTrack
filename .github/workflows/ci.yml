@@ -31,6 +31,13 @@ jobs:
           cd client
           npm install
           npm run build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            server/dist
+            client/build
 
   test:
     runs-on: ubuntu-latest
@@ -47,12 +54,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Install server & client
-        run: |
-          cd server
-          npm install
-          cd ../client
-          npm install
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
       - name: Test server
         run: |
           cd server
