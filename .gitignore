@@ -54,5 +54,6 @@ dump/
 *.
 
 # 
-ansible
+ansible/
 *.tf
+terraform1/

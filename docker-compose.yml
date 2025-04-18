@@ -10,7 +10,7 @@ services:
       - ./server:/app
       - /app/node_modules
     depends_on:
-      - mongo  # Зависимость от MongoDB
+      - mongo 
 
   app-test:
     image: andrey122333/sub-server:test
@@ -28,7 +28,7 @@ services:
   nginx:
     image: nginx:latest
     environment:
-      API_BACKEND_URL: http://app:4000  # Для docker-сети
+      API_BACKEND_URL: http://app:4000  
     volumes:
       - ./client/dist:/var/www/html  # Собранный 
       - ./nginx/conf.d:/etc/nginx/conf.d
