@@ -52,3 +52,7 @@ dump/
 
 # --- Logs and Debug ---
 *.
+
+# 
+ansible
+*.tf
