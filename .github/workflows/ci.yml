@@ -15,10 +15,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
-      - name: Build
+        
+      - name: Pull images from Docker Hub
         run: |
-          docker compose -f docker-compose.yml build
+         docker pull andrey122333/sub-server:dev
+         docker pull andrey122333/sub-server:test
+         docker pull andrey122333/sub-client:build
+         docker pull andrey122333/sub-client:test
+
 
   test:
     runs-on: ubuntu-latest
