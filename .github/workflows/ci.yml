@@ -2,9 +2,9 @@ name: CI/CD with Docker
 
 on:
   push:
-    branches: ["main"]
+    branches: ["laba2"]
   pull_request:
-    branches: ["main"]
+    branches: ["laba2"]
 
 jobs:
   build:
