@@ -43,7 +43,7 @@ function App() {
     let newErrors = {};
 
     if (!name.trim()) newErrors.name = 'Name is required';
-    if (!cost.toString()) newErrors.cost = 'Cost is required';
+    if (!cost.trim()) newErrors.cost = 'Cost is required';
     if (!startDate.trim()) newErrors.startDate = 'Start date is required';
 
     setErrors(newErrors);

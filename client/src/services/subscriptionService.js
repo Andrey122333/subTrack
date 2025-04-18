@@ -1,6 +1,6 @@
 // client/src/services/subscriptionService.js
 
-const BASE_URL = 'http://localhost:4000/api/subscriptions';
+const BASE_URL = window.location.href+'api/subscriptions' || 'http://localhost:4000/api/subscriptions';
 
 /** Получить все подписки (READ) */
 export async function getAllSubscriptions() {

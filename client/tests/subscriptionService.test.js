@@ -34,7 +34,7 @@ describe('subscriptionService', () => {
 
       const result = await getAllSubscriptions();
       expect(result).toEqual(mockData);
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:4000/api/subscriptions');
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/api/subscriptions');
     });
 
     it('должен выкидывать ошибку, если ответ не ok', async () => {
@@ -55,7 +55,7 @@ describe('subscriptionService', () => {
 
       const result = await createSubscription(subscriptionData);
       expect(result).toEqual(mockCreated);
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:4000/api/subscriptions', expect.objectContaining({
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/api/subscriptions', expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subscriptionData),
@@ -82,7 +82,7 @@ describe('subscriptionService', () => {
       const result = await updateSubscription(id, subscriptionData);
       expect(result).toEqual(mockUpdated);
       expect(mockFetch).toHaveBeenCalledWith(
-        `http://localhost:4000/api/subscriptions/${id}`,
+        `http://localhost:3000/api/subscriptions/${id}`,
         expect.objectContaining({
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -108,7 +108,7 @@ describe('subscriptionService', () => {
 
       const result = await deleteSubscription(id);
       expect(result).toEqual({ success: true });
-      expect(mockFetch).toHaveBeenCalledWith(`http://localhost:4000/api/subscriptions/${id}`, expect.objectContaining({
+      expect(mockFetch).toHaveBeenCalledWith(`http://localhost:3000/api/subscriptions/${id}`, expect.objectContaining({
         method: 'DELETE',
       }));
     });
