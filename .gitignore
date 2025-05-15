@@ -51,9 +51,4 @@ dump/
 *.icloud
 
 # --- Logs and Debug ---
-*.
 
-# 
-ansible/
-*.tf
-terraform1/
