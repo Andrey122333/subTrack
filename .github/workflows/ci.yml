@@ -10,13 +10,17 @@ on:
 
 env:
   DOCKER_HUB_REPO: andrey122333
+  GHCR_REPO: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
   IMAGE_NAME_BACKEND: sub-server:dev
   IMAGE_NAME_FRONTEND: sub-nginx:latest
   IMAGE_NAME_FRONTEND_TEST: sub-client:test
 
 jobs:
-  build-test-push:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      backend-digest: ${{ steps.push-backend.outputs.digest }}
+      frontend-digest: ${{ steps.push-frontend.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -31,7 +35,7 @@ jobs:
           cd server
           docker build \
             --target dev \
-            -t $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND \
+            -t $GHCR_REPO/$IMAGE_NAME_BACKEND \
             .
 
       # Сборка фронтенд образа
@@ -39,9 +43,55 @@ jobs:
         run: |
           cd client
           docker build \
-            -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND \
+            -t $GHCR_REPO/$IMAGE_NAME_FRONTEND \
             -f Dockerfile.nginx \
             .
+
+      # Авторизация в GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Push бэкенд образа в GHCR
+      - name: Push backend to GHCR
+        id: push-backend
+        run: |
+          docker push $GHCR_REPO/$IMAGE_NAME_BACKEND
+          echo "digest=$(docker inspect --format='{{.Id}}' $GHCR_REPO/$IMAGE_NAME_BACKEND)" >> $GITHUB_OUTPUT
+
+      # Push фронтенд образа в GHCR
+      - name: Push frontend to GHCR
+        id: push-frontend
+        run: |
+          docker push $GHCR_REPO/$IMAGE_NAME_FRONTEND
+          echo "digest=$(docker inspect --format='{{.Id}}' $GHCR_REPO/$IMAGE_NAME_FRONTEND)" >> $GITHUB_OUTPUT
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Авторизация в GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pull бэкенд образа из GHCR
+      - name: Pull backend image
+        run: docker pull $GHCR_REPO/$IMAGE_NAME_BACKEND
+
+      # Pull фронтенд образа из GHCR
+      - name: Pull frontend image
+        run: docker pull $GHCR_REPO/$IMAGE_NAME_FRONTEND
 
       # Запуск тестовой MongoDB
       - name: Start MongoDB for backend tests
@@ -76,13 +126,52 @@ jobs:
       - name: Run frontend tests
         run: |
           cd client
-          docker build -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
-          docker run --rm $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST
+          docker build -t $GHCR_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
+          docker run --rm $GHCR_REPO/$IMAGE_NAME_FRONTEND_TEST
 
-      # Push только при пуше в ветку
-      - name: Push images to Docker Hub
-        if: github.event_name == 'push'
+      - name: Cleanup after tests
+        if: always()
         run: |
-          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_TOKEN }}
-          docker push $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
-          docker push $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
+          docker stop mongo-test || true
+          docker rm mongo-test || true
+
+  push:
+    needs: [build, test]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Авторизация в GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pull образов из GHCR
+      - name: Pull backend image
+        run: docker pull $GHCR_REPO/$IMAGE_NAME_BACKEND
+
+      - name: Pull frontend image
+        run: docker pull $GHCR_REPO/$IMAGE_NAME_FRONTEND
+
+      # Перетегирование для Docker Hub
+      - name: Retag images for Docker Hub
+        run: |
+          docker tag $GHCR_REPO/$IMAGE_NAME_BACKEND $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
+          docker tag $GHCR_REPO/$IMAGE_NAME_FRONTEND $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
+
+      # Авторизация в Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Push в Docker Hub
+      - name: Push backend to Docker Hub
+        run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
+
+      - name: Push frontend to Docker Hub
+        run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
