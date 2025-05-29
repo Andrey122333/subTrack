@@ -1,16 +1,19 @@
 FROM node:18 AS base
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+# Копируем только файлы зависимостей
+COPY package.json ./
+
+# Устанавливаем зависимости
 RUN npm install
+
 EXPOSE 4000
 
 FROM base AS dev
-RUN npm install
 COPY . .
 CMD ["npm", "run", "dev"]
 
 FROM base AS test
-RUN npm install
 COPY . .
 CMD ["npm", "test"]
