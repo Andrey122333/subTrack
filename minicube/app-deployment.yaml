@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: app
+          image: andrey122333/sub-server:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          env:
+            - name: MONGO_URI
+              value: "mongodb://admin:password@mongo:27017/subscriptions?authSource=admin"
+          resources:
+            requests:
+              cpu: "1000m"  # 1 CPU ядро
+            limits:
+              cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+spec:
+  selector:
+    app: app
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+  type: ClusterIP
+  sessionAffinity: None
