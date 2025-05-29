@@ -3,10 +3,10 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - newLaba3
   pull_request:
     branches:
-      - main
+      - newLaba3
 
 env:
   DOCKER_HUB_REPO: andrey122333  # Репозиторий на Docker Hub
