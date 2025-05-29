@@ -51,7 +51,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Тесты бэкенда
+      # Запуск тестовой MongoDB для бэкенда
+      - name: Start MongoDB for backend tests
+        run: |
+          docker run -d --name mongo-test \
+            -p 27038:27017 \
+            -e MONGO_INITDB_ROOT_USERNAME=admin \
+            -e MONGO_INITDB_ROOT_PASSWORD=password \
+            mongo:6.0
+          sleep 10 # Даем время MongoDB запуститься
+
+      # Тесты бэкенда с подключением к MongoDB
       - name: Run backend tests
         run: |
           cd server
@@ -59,7 +69,11 @@ jobs:
             --target test \
             -t backend-test \
             .
-          docker run --rm backend-test
+          docker run --rm \
+            --name backend-test-container \
+            --link mongo-test:mongo-test \
+            -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
+            backend-test
 
       # Тесты фронтенда
       - name: Run frontend tests
