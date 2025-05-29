@@ -10,7 +10,6 @@ on:
 
 env:
   DOCKER_HUB_REPO: andrey122333
-  GHCR_REPO: ghcr.io/andrey122333/subtrack
   IMAGE_NAME_BACKEND: sub-server:dev
   IMAGE_NAME_FRONTEND: sub-nginx:latest
   IMAGE_NAME_FRONTEND_TEST: sub-client:test
@@ -18,9 +17,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      backend-digest: ${{ steps.push-backend.outputs.digest }}
-      frontend-digest: ${{ steps.push-frontend.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -29,45 +25,44 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Сборка бэкенд образа
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # Сборка бэкенд образа с кэшированием
       - name: Build backend image
         run: |
           cd server
-          docker build \
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-to=type=local,dest=/tmp/.buildx-cache \
             --target dev \
-            -t $GHCR_REPO/$IMAGE_NAME_BACKEND \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND \
+            --load \
             .
 
-      # Сборка фронтенд образа
+      # Сборка фронтенд образа с кэшированием
       - name: Build frontend image
         run: |
           cd client
-          docker build \
-            -t $GHCR_REPO/$IMAGE_NAME_FRONTEND \
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-to=type=local,dest=/tmp/.buildx-cache \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND \
             -f Dockerfile.nginx \
+            --load \
             .
 
-      # Авторизация в GitHub Container Registry
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      # Сохранение кэша
+      - name: Save build cache
+        uses: actions/cache/save@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Push бэкенд образа в GHCR
-      - name: Push backend to GHCR
-        id: push-backend
-        run: |
-          docker push $GHCR_REPO/$IMAGE_NAME_BACKEND
-          echo "digest=$(docker inspect --format='{{.Id}}' $GHCR_REPO/$IMAGE_NAME_BACKEND)" >> $GITHUB_OUTPUT
-
-      # Push фронтенд образа в GHCR
-      - name: Push frontend to GHCR
-        id: push-frontend
-        run: |
-          docker push $GHCR_REPO/$IMAGE_NAME_FRONTEND
-          echo "digest=$(docker inspect --format='{{.Id}}' $GHCR_REPO/$IMAGE_NAME_FRONTEND)" >> $GITHUB_OUTPUT
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
 
   test:
     needs: build
@@ -77,21 +72,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Авторизация в GitHub Container Registry
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - name: Restore build cache
+        uses: actions/cache@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
 
-      # Pull бэкенд образа из GHCR
-      - name: Pull backend image
-        run: docker pull $GHCR_REPO/$IMAGE_NAME_BACKEND
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      # Pull фронтенд образа из GHCR
-      - name: Pull frontend image
-        run: docker pull $GHCR_REPO/$IMAGE_NAME_FRONTEND
+      # Загрузка бэкенд образа из кэша
+      - name: Load backend image
+        run: |
+          cd server
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --target dev \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND \
+            --load \
+            .
+
+      # Загрузка фронтенд образа из кэша
+      - name: Load frontend image
+        run: |
+          cd client
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND \
+            -f Dockerfile.nginx \
+            --load \
+            .
 
       # Запуск тестовой MongoDB
       - name: Start MongoDB for backend tests
@@ -126,8 +136,8 @@ jobs:
       - name: Run frontend tests
         run: |
           cd client
-          docker build -t $GHCR_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
-          docker run --rm $GHCR_REPO/$IMAGE_NAME_FRONTEND_TEST
+          docker build -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
+          docker run --rm $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST
 
       - name: Cleanup after tests
         if: always()
@@ -141,26 +151,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Авторизация в GitHub Container Registry
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore build cache
+        uses: actions/cache@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
 
-      # Pull образов из GHCR
-      - name: Pull backend image
-        run: docker pull $GHCR_REPO/$IMAGE_NAME_BACKEND
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Pull frontend image
-        run: docker pull $GHCR_REPO/$IMAGE_NAME_FRONTEND
-
-      # Перетегирование для Docker Hub
-      - name: Retag images for Docker Hub
+      # Загрузка образов из кэша
+      - name: Load backend image
         run: |
-          docker tag $GHCR_REPO/$IMAGE_NAME_BACKEND $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
-          docker tag $GHCR_REPO/$IMAGE_NAME_FRONTEND $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
+          cd server
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --target dev \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND \
+            --load \
+            .
+
+      - name: Load frontend image
+        run: |
+          cd client
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND \
+            -f Dockerfile.nginx \
+            --load \
+            .
 
       # Авторизация в Docker Hub
       - name: Login to Docker Hub
@@ -170,8 +192,8 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       # Push в Docker Hub
-      - name: Push backend to Docker Hub
+      - name: Push backend image
         run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
 
-      - name: Push frontend to Docker Hub
+      - name: Push frontend image
         run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
