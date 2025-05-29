@@ -10,7 +10,7 @@ on:
 
 env:
   DOCKER_HUB_REPO: andrey122333
-  GHCR_REPO: ghcr.io/andrey122333/${{ github.event.repository.name }}
+  GHCR_REPO: ghcr.io/andrey122333/subtrack
   IMAGE_NAME_BACKEND: sub-server:dev
   IMAGE_NAME_FRONTEND: sub-nginx:latest
   IMAGE_NAME_FRONTEND_TEST: sub-client:test
