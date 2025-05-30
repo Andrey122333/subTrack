@@ -33,7 +33,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # Сборка бэкенд образа с кэшированием
       - name: Build backend image
         run: |
           cd server
@@ -45,7 +44,6 @@ jobs:
             --load \
             .
 
-      # Сборка фронтенд образа с кэшированием
       - name: Build frontend image
         run: |
           cd client
@@ -57,7 +55,6 @@ jobs:
             --load \
             .
 
-      # Сохранение кэша
       - name: Save build cache
         uses: actions/cache/save@v3
         with:
@@ -81,7 +78,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Загрузка бэкенд образа из кэша
       - name: Load backend image
         run: |
           cd server
@@ -92,7 +88,6 @@ jobs:
             --load \
             .
 
-      # Загрузка фронтенд образа из кэша
       - name: Load frontend image
         run: |
           cd client
@@ -103,7 +98,22 @@ jobs:
             --load \
             .
 
-      # Запуск тестовой MongoDB
+# coverage 
+      - name: Run backend tests with coverage
+        run: |
+          cd server
+          docker run --rm \
+            -v $(pwd)/coverage:/app/coverage \
+            -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
+            backend-test npm run test:coverage
+
+      - name: Save coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: server/coverage/lcov.info
+
+          # Загрузка отчета о покрытии
       - name: Start MongoDB for backend tests
         run: |
           docker run -d --name mongo-test \
@@ -121,7 +131,6 @@ jobs:
             sleep 1
           done
 
-      # Тесты бэкенда
       - name: Run backend tests
         run: |
           cd server
@@ -132,7 +141,6 @@ jobs:
             -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
             backend-test
 
-      # Тесты фронтенда
       - name: Run frontend tests
         run: |
           cd client
@@ -145,8 +153,46 @@ jobs:
           docker stop mongo-test || true
           docker rm mongo-test || true
 
+  sonarqube:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-report
+          path: server/coverage
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd server
+          npm ci
+
+      - name: Install SonarCloud Scanner
+        run: npm install -g sonarqube-scanner
+
+      - name: Run SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd server
+          sonar-scanner \
+            -Dsonar.qualitygate.wait=true \
+            -Dsonar.qualitygate.timeout=300
+
   push:
-    needs: [build, test]
+    needs: [build, test, sonarqube]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
@@ -163,7 +209,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Загрузка образов из кэша
       - name: Load backend image
         run: |
           cd server
@@ -184,14 +229,12 @@ jobs:
             --load \
             .
 
-      # Авторизация в Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # Push в Docker Hub
       - name: Push backend image
         run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND
 
