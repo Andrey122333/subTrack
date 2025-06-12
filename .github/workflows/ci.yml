@@ -169,6 +169,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd server
+          npm set registry https://registry.npmmirror.com/ 
           npm install
 
       - name: Install SonarCloud Scanner
