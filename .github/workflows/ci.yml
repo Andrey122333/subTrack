@@ -101,9 +101,11 @@ jobs:
       - name: Start MongoDB for backend tests
         run: |
           docker run -d --name mongo-test \
+            -p 27038:27017 \
             -e MONGO_INITDB_ROOT_USERNAME=admin \
             -e MONGO_INITDB_ROOT_PASSWORD=password \
             mongo:6.0
+          
           # Ожидание готовности MongoDB
           for i in {1..30}; do
             if docker run --rm --network container:mongo-test mongo:6.0 \
@@ -115,17 +117,19 @@ jobs:
 
       - name: Run backend tests with coverage
         run: |
+          cd server
+          docker build --target test -t backend-test .
           docker run --rm \
-            --network container:mongo-test \
-            -v ${{ github.workspace }}/server/coverage:/app/coverage \
-            -e MONGO_URI="mongodb://admin:password@localhost:27017/subscriptions_test?authSource=admin" \
-            andrey122333/sub-server:test npm run test:coverage
+            --name backend-test-container \
+            --link mongo-test:mongo-test \
+            -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
+            backend-test
 
       - name: Run frontend tests with coverage
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/client/coverage:/app/coverage \
-            andrey122333/sub-client:test npm run test:coverage
+          cd client
+          docker build -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
+          docker run --rm $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST
 
       - name: Upload combined coverage reports
         uses: actions/upload-artifact@v4
