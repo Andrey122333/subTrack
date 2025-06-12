@@ -3,10 +3,10 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches:
-      - laba4
+      - main
   pull_request:
     branches:
-      - laba4
+      - main
 
 env:
   DOCKER_HUB_REPO: andrey122333
