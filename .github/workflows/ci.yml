@@ -131,49 +131,10 @@ jobs:
           docker build -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
           docker run --rm $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST
 
-      - name: Upload combined coverage reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-coverage
-          path: |
-            server/coverage/lcov.info
-            client/coverage/lcov.info
-
-      - name: Cleanup MongoDB
-        if: always()
-        run: |
-          docker stop mongo-test || true
-          docker rm mongo-test || true
-
-
-  sonarqube:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: combined-coverage
-          path: server/coverage
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: |
-          cd server
-          npm set registry https://registry.npmmirror.com/ 
-          npm install
-
       - name: Install SonarCloud Scanner
-        run: npm install -g sonarqube-scanner
+        run: |
+         npm set registry https://registry.npmmirror.com/ 
+         npm install -g sonarqube-scanner
 
       - name: Run SonarCloud Analysis
         env:
@@ -188,6 +149,13 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,../client/coverage/lcov.info \
             -Dsonar.qualitygate.wait=true \
             -Dsonar.qualitygate.timeout=300
+      
+
+      - name: Cleanup MongoDB
+        if: always()
+        run: |
+          docker stop mongo-test || true
+          docker rm mongo-test || true
 
 
 
