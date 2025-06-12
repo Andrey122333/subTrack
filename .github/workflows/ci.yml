@@ -143,7 +143,7 @@ jobs:
         run: |
           cd server
           sonar-scanner \
-            -Dsonar.projectKey=Andrey122333_subTrack \
+            -Dsonar.projectKey=andrey122333_subtrack \
             -Dsonar.organization=andrey122333 \
             -Dsonar.sources=. \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,../client/coverage/lcov.info \
