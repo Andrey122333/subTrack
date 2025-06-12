@@ -138,12 +138,12 @@ jobs:
 
       - name: Run SonarCloud Analysis
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOK }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd server
           sonar-scanner \
-            -Dsonar.projectKey=andrey122333_subtrack \
+            -Dsonar.projectKey=Andrey122333_subTrack \
             -Dsonar.organization=andrey122333 \
             -Dsonar.sources=. \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,../client/coverage/lcov.info \
