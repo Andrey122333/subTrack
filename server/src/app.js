@@ -5,6 +5,7 @@ const client = require('prom-client');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 const app = express();
+app.disable('x-powered-by');
 app.use(cors());
 app.use(express.json());
 
@@ -50,16 +51,6 @@ app.use((req, res, next) => {
   });
   next();
 });
-
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-});
-
-app.get('/test', (req, res) => {
-  res.send('Тестовый ответ!');
-});
-
 
 
 // Маршруты

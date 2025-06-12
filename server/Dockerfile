@@ -6,15 +6,17 @@ WORKDIR /app
 COPY package.json ./
 
 # Устанавливаем зависимости
-RUN npm set registry https://registry.npmmirror.com/ && npm install
+RUN npm set registry https://registry.npmmirror.com/ && npm install --ignore-scripts
 # RUN npm install
 
 EXPOSE 4000
 
 FROM base AS dev
+USER nonroot
 COPY . .
 CMD ["npm", "run", "dev"]
 
 FROM base AS test
+USER nonroot
 COPY . .
 CMD ["npm", "run", "test:coverage"]

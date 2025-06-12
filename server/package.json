@@ -9,6 +9,9 @@
     "test:coverage": "jest --coverage",
     "sonar": "sonar-scanner"
   },
+  "sonar": {
+    "exclusions": "**/test/**,**/*.test.js,jest.config.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

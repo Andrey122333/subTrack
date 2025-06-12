@@ -148,6 +148,33 @@ describe('Subscription API', () => {
     expect(checkSub).toBeNull();
   });
 
+
+  //Новый
+  test('POST /api/subscriptions - должен вернуть 400 при ошибке сохранения', async () => {
+    jest.spyOn(Subscription.prototype, 'save').mockImplementationOnce(() => {
+      throw new Error('Test save error');
+    });
+
+    const res = await request(app)
+      .post('/api/subscriptions')
+      .send({ name: 'Test Fail' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Test save error');
+  });
+
+  test('GET /api/subscriptions - должен вернуть 500 при ошибке', async () => {
+    jest.spyOn(Subscription, 'find').mockImplementationOnce(() => {
+      throw new Error('DB find error');
+    });
+
+    const res = await request(app).get('/api/subscriptions');
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'DB find error');
+  });
+
+
+
   /** Тест: Удаление несуществующей подписки (DELETE) */
   test('DELETE /api/subscriptions/:id - должен возвращать 404, если подписка не найдена', async () => {
     const fakeId = new mongoose.Types.ObjectId();
