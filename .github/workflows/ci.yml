@@ -188,8 +188,13 @@ jobs:
         run: |
           cd server
           sonar-scanner \
+            -Dsonar.projectKey=subTrack \
+            -Dsonar.organization=ТВОЙ_ORG \
+            -Dsonar.sources=. \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
             -Dsonar.qualitygate.wait=true \
             -Dsonar.qualitygate.timeout=300
+
 
   push:
     needs: [build, test, sonarqube]
