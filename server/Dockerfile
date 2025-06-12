@@ -6,7 +6,8 @@ WORKDIR /app
 COPY package.json ./
 
 # Устанавливаем зависимости
-RUN npm install
+RUN npm set registry https://registry.npmmirror.com/ && npm install
+# RUN npm install
 
 EXPOSE 4000
 
@@ -16,4 +17,4 @@ CMD ["npm", "run", "dev"]
 
 FROM base AS test
 COPY . .
-CMD ["npm", "test"]
+CMD ["npm", "run", "test:coverage"]
