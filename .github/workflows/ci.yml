@@ -83,75 +83,57 @@ jobs:
           cd server
           docker buildx build \
             --cache-from=type=local,src=/tmp/.buildx-cache \
-            --target dev \
-            -t $DOCKER_HUB_REPO/$IMAGE_NAME_BACKEND \
+            --target test \
+            -t andrey122333/sub-server:test \
             --load \
             .
 
-      - name: Load frontend image
+      - name: Load frontend test image
         run: |
           cd client
           docker buildx build \
             --cache-from=type=local,src=/tmp/.buildx-cache \
-            -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND \
-            -f Dockerfile.nginx \
+            -t andrey122333/sub-client:test \
+            -f Dockerfile.test \
             --load \
             .
 
-# coverage 
-      - name: Run backend tests with coverage
-        run: |
-          cd server
-          docker run --rm \
-            -v $(pwd)/coverage:/app/coverage \
-            -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
-            backend-test npm run test:coverage
-
-      - name: Save coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: server/coverage/lcov.info
-
-          # Загрузка отчета о покрытии
       - name: Start MongoDB for backend tests
         run: |
           docker run -d --name mongo-test \
-            -p 27038:27017 \
             -e MONGO_INITDB_ROOT_USERNAME=admin \
             -e MONGO_INITDB_ROOT_PASSWORD=password \
             mongo:6.0
-          
-          # Ожидание готовности MongoDB
-          for i in {1..30}; do
-            if docker run --rm --network container:mongo-test mongo:6.0 \
-              mongo --eval 'db.runCommand("ping").ok' --quiet; then
-              break
-            fi
-            sleep 1
-          done
+          sleep 10  # Упрощённое ожидание запуска
 
-      - name: Run backend tests
+      - name: Run backend tests with coverage
         run: |
-          cd server
-          docker build --target test -t backend-test .
           docker run --rm \
-            --name backend-test-container \
-            --link mongo-test:mongo-test \
-            -e MONGO_URI="mongodb://admin:password@mongo-test:27017/subscriptions_test?authSource=admin" \
-            backend-test
+            --network container:mongo-test \
+            -v ${{ github.workspace }}/server/coverage:/app/coverage \
+            -e MONGO_URI="mongodb://admin:password@localhost:27017/subscriptions_test?authSource=admin" \
+            andrey122333/sub-server:test npm run test:coverage
 
-      - name: Run frontend tests
+      - name: Run frontend tests with coverage
         run: |
-          cd client
-          docker build -t $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST -f Dockerfile.test .
-          docker run --rm $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND_TEST
+          docker run --rm \
+            -v ${{ github.workspace }}/client/coverage:/app/coverage \
+            andrey122333/sub-client:test npm run test:coverage
 
-      - name: Cleanup after tests
+      - name: Upload combined coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-coverage
+          path: |
+            server/coverage/lcov.info
+            client/coverage/lcov.info
+
+      - name: Cleanup MongoDB
         if: always()
         run: |
           docker stop mongo-test || true
           docker rm mongo-test || true
+
 
   sonarqube:
     needs: test
