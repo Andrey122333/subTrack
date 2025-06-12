@@ -9,7 +9,10 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ['text', 'lcov'],
-      reportsDirectory: './coverage'
+      reportsDirectory: './coverage',
+      threshold: {
+        lines: 80
+      }
     }
   }
 });
