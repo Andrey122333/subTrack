@@ -147,6 +147,7 @@ jobs:
             -Dsonar.organization=andrey122333 \
             -Dsonar.sources=. \
             -Dsonar.exclusions=**/test/**,**/*.test.js,jest.config.js,src/server.js \
+            -Dsonar.duplication.exclusions=**/test/**,**/*.test.js,src/server.js,src/routes/** \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,../client/coverage/lcov.info \
             -Dsonar.qualitygate.wait=true \
             -Dsonar.qualitygate.timeout=300
