@@ -158,7 +158,7 @@ jobs:
       - name: Download coverage report
         uses: actions/download-artifact@v4
         with:
-          name: coverage-report
+          name: combined-coverage
           path: server/coverage
 
       - name: Setup Node.js
