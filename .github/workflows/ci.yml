@@ -169,7 +169,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd server
-          npm ci
+          npm install
 
       - name: Install SonarCloud Scanner
         run: npm install -g sonarqube-scanner
