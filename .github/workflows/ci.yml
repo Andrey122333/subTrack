@@ -61,6 +61,12 @@ jobs:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
 
+      - name: Notify Telegram — Build started
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚀 CI запущен: завершён этап build
+
   test:
     needs: build
     runs-on: ubuntu-latest
@@ -147,7 +153,7 @@ jobs:
             -Dsonar.organization=andrey122333 \
             -Dsonar.sources=. \
             -Dsonar.exclusions=**/test/**,**/*.test.js,jest.config.js,src/server.js,coverage/lcov-report/** \
-            -Dsonar.duplication.exclusions=**/test/**,**/*.test.js,src/server.js,src/routes/** \
+            -Dsonar.duplication.exclusions=**/test/**,**/*.test.js,src/server.js,src/routes/**,coverage/lcov-report/** \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,../client/coverage/lcov.info \
             -Dsonar.qualitygate.wait=true \
             -Dsonar.qualitygate.timeout=300
@@ -158,6 +164,12 @@ jobs:
         run: |
           docker stop mongo-test || true
           docker rm mongo-test || true
+
+      - name: Notify Telegram — Build started
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚀 CI запущен: завершён этап test
 
 
 
@@ -210,3 +222,9 @@ jobs:
 
       - name: Push frontend image
         run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
+
+      - name: Notify Telegram — Build started
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚀 CI запущен: завершён этап prod
