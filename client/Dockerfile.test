@@ -8,10 +8,11 @@ ENV VITE_API_URL=$VITE_API_URL
 
 # Копируем package.json и устанавливаем зависимости
 COPY package.json ./
-RUN npm install --include=dev
+RUN npm set registry https://registry.npmmirror.com/ && npm install --include=dev
+# RUN npm install --include=dev
 
 # Копируем исходники
 COPY . .
 
 # Выполняем тесты
-CMD ["npm", "run", "test"]
+CMD ["npm", "run", "test:coverage"]

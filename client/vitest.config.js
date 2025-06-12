@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    globals: true, // Включает глобальные переменные Jest (например, expect)
-  },
+    globals: true,
+    coverage: {
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage'
+    }
+  }
 });
