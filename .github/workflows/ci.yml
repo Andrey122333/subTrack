@@ -160,7 +160,7 @@ jobs:
 
 
   push:
-    needs: [build, test, sonarqube]
+    needs: [build, test]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
