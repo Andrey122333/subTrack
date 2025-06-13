@@ -237,6 +237,12 @@ jobs:
       - name: Push frontend image
         run: docker push $DOCKER_HUB_REPO/$IMAGE_NAME_FRONTEND
 
+      - name: Trigger rollout in Minikube
+        run: |
+          curl -X POST https://e7ba03c329bad4.lhr.life/webhook \
+            -H 'Content-Type: application/json' \
+            -d '{"event":"deploy"}'
+
       - name: Notify Telegram — Build started
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
