@@ -33,6 +33,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
+      - name: Trigger rollout in Minikube
+        run: |
+          curl -X POST https://e079e85b61b36b.lhr.life/webhook \
+            -H 'Content-Type: application/json' \
+            -d '{"event":"deploy"}'
+
       - name: Build backend image
         run: |
           cd server
@@ -239,7 +245,7 @@ jobs:
 
       - name: Trigger rollout in Minikube
         run: |
-          curl -X POST https://e7ba03c329bad4.lhr.life/webhook \
+          curl -X POST https://e079e85b61b36b.lhr.life/webhook \
             -H 'Content-Type: application/json' \
             -d '{"event":"deploy"}'
 
