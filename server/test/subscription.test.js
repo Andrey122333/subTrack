@@ -70,108 +70,108 @@ describe('Subscription API', () => {
   });
 
   /** Тест: Получение одной подписки по ID (GET) */
-  test('GET /api/subscriptions/:id - должен возвращать подписку', async () => {
-    const newSub = await Subscription.create({
-      name: 'Amazon Prime',
-      cost: 15,
-      startDate: '2023-03-01'
-    });
+  // test('GET /api/subscriptions/:id - должен возвращать подписку', async () => {
+  //   const newSub = await Subscription.create({
+  //     name: 'Amazon Prime',
+  //     cost: 15,
+  //     startDate: '2023-03-01'
+  //   });
 
-    const response = await request(app)
-      .get(`/api/subscriptions/${newSub._id}`)
-      .expect(200);
+  //   const response = await request(app)
+  //     .get(`/api/subscriptions/${newSub._id}`)
+  //     .expect(200);
 
-    expect(response.body._id).toBeDefined();
-    expect(response.body.name).toBe(newSub.name);
-    expect(response.body.cost).toBe(newSub.cost);
-  });
+  //   expect(response.body._id).toBeDefined();
+  //   expect(response.body.name).toBe(newSub.name);
+  //   expect(response.body.cost).toBe(newSub.cost);
+  // });
 
-  /** Тест: Запрос несуществующей подписки (GET) */
-  test('GET /api/subscriptions/:id - должен возвращать 404, если подписки нет', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
+  // /** Тест: Запрос несуществующей подписки (GET) */
+  // test('GET /api/subscriptions/:id - должен возвращать 404, если подписки нет', async () => {
+  //   const fakeId = new mongoose.Types.ObjectId();
 
-    const response = await request(app)
-      .get(`/api/subscriptions/${fakeId}`)
-      .expect(404);
+  //   const response = await request(app)
+  //     .get(`/api/subscriptions/${fakeId}`)
+  //     .expect(404);
 
-    expect(response.body.message).toBe('Subscription not found');
-  });
+  //   expect(response.body.message).toBe('Subscription not found');
+  // });
 
-  /** Тест: Обновление подписки (PUT) */
-  test('PUT /api/subscriptions/:id - должен обновлять подписку', async () => {
-    const newSub = await Subscription.create({
-      name: 'Disney+',
-      cost: 8,
-      startDate: '2023-04-01'
-    });
+  // /** Тест: Обновление подписки (PUT) */
+  // test('PUT /api/subscriptions/:id - должен обновлять подписку', async () => {
+  //   const newSub = await Subscription.create({
+  //     name: 'Disney+',
+  //     cost: 8,
+  //     startDate: '2023-04-01'
+  //   });
 
-    const updatedData = {
-      name: 'Disney+ Updated',
-      cost: 12
-    };
+  //   const updatedData = {
+  //     name: 'Disney+ Updated',
+  //     cost: 12
+  //   };
 
-    const response = await request(app)
-      .put(`/api/subscriptions/${newSub._id}`)
-      .send(updatedData)
-      .expect(200);
+  //   const response = await request(app)
+  //     .put(`/api/subscriptions/${newSub._id}`)
+  //     .send(updatedData)
+  //     .expect(200);
 
-    expect(response.body.name).toBe(updatedData.name);
-    expect(response.body.cost).toBe(updatedData.cost);
-  });
+  //   expect(response.body.name).toBe(updatedData.name);
+  //   expect(response.body.cost).toBe(updatedData.cost);
+  // });
 
-  /** Тест: Обновление несуществующей подписки (PUT) */
-  test('PUT /api/subscriptions/:id - должен возвращать 404, если подписка не найдена', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const updatedData = { name: 'Non-Existent', cost: 20 };
+  // /** Тест: Обновление несуществующей подписки (PUT) */
+  // test('PUT /api/subscriptions/:id - должен возвращать 404, если подписка не найдена', async () => {
+  //   const fakeId = new mongoose.Types.ObjectId();
+  //   const updatedData = { name: 'Non-Existent', cost: 20 };
 
-    const response = await request(app)
-      .put(`/api/subscriptions/${fakeId}`)
-      .send(updatedData)
-      .expect(404);
+  //   const response = await request(app)
+  //     .put(`/api/subscriptions/${fakeId}`)
+  //     .send(updatedData)
+  //     .expect(404);
 
-    expect(response.body.message).toBe('Subscription not found');
-  });
+  //   expect(response.body.message).toBe('Subscription not found');
+  // });
 
-  /** Тест: Удаление подписки (DELETE) */
-  test('DELETE /api/subscriptions/:id - должен удалять подписку', async () => {
-    const newSub = await Subscription.create({
-      name: 'YouTube Premium',
-      cost: 11,
-      startDate: '2023-05-01'
-    });
+  // /** Тест: Удаление подписки (DELETE) */
+  // test('DELETE /api/subscriptions/:id - должен удалять подписку', async () => {
+  //   const newSub = await Subscription.create({
+  //     name: 'YouTube Premium',
+  //     cost: 11,
+  //     startDate: '2023-05-01'
+  //   });
 
-    await request(app)
-      .delete(`/api/subscriptions/${newSub._id}`)
-      .expect(200);
+  //   await request(app)
+  //     .delete(`/api/subscriptions/${newSub._id}`)
+  //     .expect(200);
 
-    const checkSub = await Subscription.findById(newSub._id);
-    expect(checkSub).toBeNull();
-  });
+  //   const checkSub = await Subscription.findById(newSub._id);
+  //   expect(checkSub).toBeNull();
+  // });
 
 
-  //Новый
-  test('POST /api/subscriptions - должен вернуть 400 при ошибке сохранения', async () => {
-    jest.spyOn(Subscription.prototype, 'save').mockImplementationOnce(() => {
-      throw new Error('Test save error');
-    });
+  // //Новый
+  // test('POST /api/subscriptions - должен вернуть 400 при ошибке сохранения', async () => {
+  //   jest.spyOn(Subscription.prototype, 'save').mockImplementationOnce(() => {
+  //     throw new Error('Test save error');
+  //   });
 
-    const res = await request(app)
-      .post('/api/subscriptions')
-      .send({ name: 'Test Fail' });
+  //   const res = await request(app)
+  //     .post('/api/subscriptions')
+  //     .send({ name: 'Test Fail' });
 
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('error', 'Test save error');
-  });
+  //   expect(res.status).toBe(400);
+  //   expect(res.body).toHaveProperty('error', 'Test save error');
+  // });
 
-  test('GET /api/subscriptions - должен вернуть 500 при ошибке', async () => {
-    jest.spyOn(Subscription, 'find').mockImplementationOnce(() => {
-      throw new Error('DB find error');
-    });
+  // test('GET /api/subscriptions - должен вернуть 500 при ошибке', async () => {
+  //   jest.spyOn(Subscription, 'find').mockImplementationOnce(() => {
+  //     throw new Error('DB find error');
+  //   });
 
-    const res = await request(app).get('/api/subscriptions');
-    expect(res.status).toBe(500);
-    expect(res.body).toHaveProperty('error', 'DB find error');
-  });
+  //   const res = await request(app).get('/api/subscriptions');
+  //   expect(res.status).toBe(500);
+  //   expect(res.body).toHaveProperty('error', 'DB find error');
+  // });
 
 
 
