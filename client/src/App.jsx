@@ -129,7 +129,7 @@ function App() {
 
   return (
     <div className="page-container">
-      <h1>Subscriptions 9</h1>
+      <h1>Subscriptions</h1>
 
       <h2>Add subscription</h2>
 
